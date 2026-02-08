@@ -1,0 +1,4 @@
+docker exec -i secure_auth_postgres psql -U postgres -d SecureAuthSystem < migrations/001_add_role_enum.sql
+
+'@typescript-eslint/no-unsafe-assignment': 'off',
+//basically its help when we wanna off the complain of typescript in eslint
