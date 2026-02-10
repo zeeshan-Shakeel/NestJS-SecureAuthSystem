@@ -1,7 +1,7 @@
 import { Controller, Request, Post, Body, Get, Param, Put, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe.js';
-import { registerUserSchema, loginUserSchema, RegisterUserDto, loginUserDto } from '../schemas/user.schema.js';
+import { registerUserSchema, loginUserSchema, RegisterUserDto, loginUserDto, RefreshTokenDto, refreshTokenSchema } from '../schemas/user.schema.js';
 import { Public } from './decorators/public.decorator.js';
 
 @Controller('auth')
@@ -40,10 +40,15 @@ export class AuthController {
         return this.authservice.signIn(loginUserDto);
     }
 
+    @Public()
+    @Post('refresh')
+    refreshTokens(@Body(new ZodValidationPipe(refreshTokenSchema)) refreshTokenDto: RefreshTokenDto) {
+        return this.authservice.refreshTokens(refreshTokenDto);
+    }
+
     @Get('profile')
     getProfile(@Request() req) {
         console.log("User Request", req.user)
         return req.user;
     }
-
 }

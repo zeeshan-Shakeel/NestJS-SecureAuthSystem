@@ -45,4 +45,10 @@ export class UserService {
         console.log("Email:",result)
         return result.rows[0];
     }
+    async updateRefreshToken(id:number,refreshToken:string){
+        const query='Update "User" SET "refreshToken"=$1 where id=$2';
+        const value=[refreshToken,id];
+        const result=await this.db.query(query,value);
+    
+    }
 }

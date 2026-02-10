@@ -1,0 +1,15 @@
+-------------------------------------------------------------
+Create a NEXTJS App 
+
+bun create next-app frontend
+
+? Would you like to use the recommended Next.js defaults? › - Use arrow-keys. Return to submit.
+❯   Yes, use recommended defaults
+    TypeScript, ESLint, Tailwind CSS, App Router
+    No, reuse previous settings
+    No, customize settings
+
+after cd frontend and bun init  
+bunx shadcn@latest init
+
+--------------------------------------------------------------
