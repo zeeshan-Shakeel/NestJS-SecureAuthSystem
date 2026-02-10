@@ -1,4 +1,43 @@
+
+
+
+
+
+-------------------------------------------------
+Docker Database generate command
+
+
 docker exec -i secure_auth_postgres psql -U postgres -d SecureAuthSystem < migrations/001_add_role_enum.sql
+
+
+-------------------------------------------------------
+
+
+
+
 
 '@typescript-eslint/no-unsafe-assignment': 'off',
 //basically its help when we wanna off the complain of typescript in eslint
+
+
+
+
+-----------------------------------------------------------------
+
+
+THE GOLDEN RULE (memorize this) JavaScript objects are built left → right Last key always wins
+const result = {
+  ...registerUserDto,
+  password: hash,
+};
+JS builds it like this
+
+Start { }
+
+Spread registerUserDto
+→ { email: "a@b.com", password: "123" }
+
+Add password: hash
+→ { email: "a@b.com", password: "HASHED" }
+
+❗ Password appears again, so it’s overwritten.
