@@ -11,10 +11,11 @@ export class AuthService {
     }
     async register(registerUserDto: RegisterUserDto) {
         const hash = await bcrypt.hash(registerUserDto.password, 10);
-        const newUser = await this.userservice.createUser({ ...registerUserDto, password: hash });
+        const newUser = await this.userservice.createUser({ ...registerUserDto, password: hash , role:registerUserDto.role ?? 'User'});
         const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
         const token = await this.jwtService.signAsync(payload);
         const { password, ...newUserData } = newUser;
+        console.log("New User Data", newUserData);
         const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
         const hasRefreshToken = await bcrypt.hash(refreshToken, 10);
         await this.userservice.updateRefreshToken(newUser.id, hasRefreshToken);
@@ -40,7 +41,7 @@ export class AuthService {
         console.log("checking", user)
         const isMatch = user ? await bcrypt.compare(loginUserDto.password, user.password) : false;
         if (!isMatch) {
-            throw new Error("Invalid Username or password");
+            throw new UnauthorizedException("Invalid Username or password");
         }
         const payload = { sub: user.id, email: user.email, role: user.role };
         const token = await this.jwtService.signAsync(payload);

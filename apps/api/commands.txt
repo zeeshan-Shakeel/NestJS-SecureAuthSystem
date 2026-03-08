@@ -41,3 +41,12 @@ Add password: hash
 → { email: "a@b.com", password: "HASHED" }
 
 ❗ Password appears again, so it’s overwritten.
+
+
+if wanna see the dockerize container table name than
+
+docker ps
+
+docker exec -it pg-container psql -U your_username -d your_database
+
+docker exec -it secure_auth_postgres psql -U postgres -d SecureAuthSystem
