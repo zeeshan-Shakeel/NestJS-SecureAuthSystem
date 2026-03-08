@@ -15,8 +15,15 @@ export class UserService {
 
         const values = [user.email, user.name, user.password, user.role];
 
-        const result = await this.db.query(query, values);
-        return result.rows[0];
+        try {
+            const result = await this.db.query(query, values);
+            return result.rows[0];
+        } catch (error: any) {
+            if (error.code === '23505') { // Unique constraint violation code for Postgres
+                throw new ConflictException('Email already exists');
+            }
+            throw error;
+        }
     }
     async getUser(id: number) {
         const query = `SELECT * FROM "User" WHERE id = $1`;
@@ -38,17 +45,17 @@ export class UserService {
         const result = await this.db.query(query, [user.name, user.email, user.password, user.role, id]);
         return result.rows[0];
     }
-    async getUSerByEmail(email:string){
-        const query=`Select * from "User" where email=$1`;
-        const values=[email];
-        const result=await this.db.query(query,values);
-        console.log("Email:",result)
+    async getUSerByEmail(email: string) {
+        const query = `Select * from "User" where email=$1`;
+        const values = [email];
+        const result = await this.db.query(query, values);
+        // console.log("Email:", result)
         return result.rows[0];
     }
-    async updateRefreshToken(id:number,refreshToken:string){
-        const query='Update "User" SET "refreshToken"=$1 where id=$2';
-        const value=[refreshToken,id];
-        const result=await this.db.query(query,value);
-    
+    async updateRefreshToken(id: number, refreshToken: string) {
+        const query = 'Update "User" SET "refreshToken"=$1 where id=$2';
+        const value = [refreshToken, id];
+        const result = await this.db.query(query, value);
+
     }
 }
