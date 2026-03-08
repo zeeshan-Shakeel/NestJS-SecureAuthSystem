@@ -29,28 +29,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
+    // Restore user from localStorage on page load
     useEffect(() => {
-        // Check if user is already logged in (optional: implement /me endpoint for session persistence)
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (token) {
-            // Ideally verify token with backend here
-            // api.get('/auth/profile').then(res => setUser(res.data)).catch(() => logout());
-            setLoading(false);
-        } else {
-            setLoading(false);
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('token');
+            const storedUser = localStorage.getItem('user');
+            if (token && storedUser) {
+                try {
+                    console.log("Stored User", storedUser);
+                    setUser(JSON.parse(storedUser));
+                    console.log("User", user);
+                } catch {
+                    // corrupted data, clear it
+                    console.log("Corrupted data");
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                }
+            }
         }
+        setLoading(false);
     }, []);
 
     const login = async (data: LoginValues) => {
         try {
             const response = await api.post('/auth/signIn', data);
-            const { accessToken, user } = response.data; // Adjust based on actual API response
+            const { accessToken, refreshToken, user: loggedInUser } = response.data;
 
             if (typeof window !== 'undefined') {
                 localStorage.setItem('token', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
+                localStorage.setItem('user', JSON.stringify(loggedInUser));
             }
-            // If backend returns user object, set it. Otherwise fetch profile.
-            // setUser(user); 
+            setUser(loggedInUser);
 
             toast.success('Logged in successfully');
             router.push('/dashboard');
@@ -62,13 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = async (data: RegisterValues) => {
         try {
-            console.log("Registration Data", data);
-            const response = await api.post('/auth/register', data);
-            console.log("Registration successful!", response.data);
+            await api.post('/auth/register', data);
             toast.success('Registration successful! Please login.');
-            // router.push('/login');
+            router.push('/login');
         } catch (error: any) {
-            console.error("Registration error:", error);
+            console.error('Registration error:', error);
             toast.error(error.response?.data?.message || 'Registration failed');
             throw error;
         }
@@ -77,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = () => {
         if (typeof window !== 'undefined') {
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
         }
         setUser(null);
         router.push('/login');

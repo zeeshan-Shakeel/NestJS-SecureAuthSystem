@@ -1,0 +1,32 @@
+const originalRequest = error.config;
+
+In Axios, every request has a config object that stores URL, headers, method, and other request info.
+
+When a request fails (like with a 401), error.config contains the exact request that caused the error.
+
+Saving it as originalRequest allows us to retry the same request after refreshing the access token.
+
+
+---------------------------------------------------------------------------------------------------------
+
+What is _retry and why do we need it?
+if (!originalRequest._retry) {
+    originalRequest._retry = true;
+    // retry logic here
+}
+
+_retry is a custom flag added to originalRequest to prevent infinite loops.
+
+Why?
+
+Imagine:
+
+Access token expired → server returns 401.
+
+Interceptor catches it → calls /auth/refresh.
+
+If refresh fails or retry fails → server returns 401 again.
+
+Without _retry, the interceptor would keep retrying forever, creating an infinite loop.
+
+Setting _retry = true ensures that we only try refreshing once per failed request.

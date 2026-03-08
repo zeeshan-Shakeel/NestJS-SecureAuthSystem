@@ -1,5 +1,5 @@
 
-
+For Entering in the postgres UI terminal 
 
 
 
@@ -42,6 +42,7 @@ Add password: hash
 
 ❗ Password appears again, so it’s overwritten.
 
+--------------------------------------------------------------w------------------------------------
 
 if wanna see the dockerize container table name than
 
