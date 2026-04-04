@@ -10,14 +10,8 @@ const api = axios.create({
     timeout: 10000,
 });
 
-// Request interceptor — attach access token to every request
+// Request interceptor — no longer need to manually attach tokens (handled by cookies)
 api.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-    }
     return config;
 });
 
@@ -35,35 +29,20 @@ api.interceptors.response.use(
         ) {
             originalRequest._retry = true;
 
-            const refreshToken = localStorage.getItem('refreshToken');
+            try {
+                // Call refresh endpoint — backend reads refreshToken from HttpOnly cookie
+                await axios.post(
+                    process.env.NEXT_PUBLIC_API_URL + '/auth/refresh',
+                    {},
+                    { withCredentials: true }
+                );
 
-            if (refreshToken) {
-                try {
-                    // Call refresh endpoint with the stored refresh token
-                    const response = await axios.post(
-                        process.env.NEXT_PUBLIC_API_URL + '/auth/refresh',
-                        { refreshToken }
-                    );
+                // If successful, the backend has set new cookies. RETRY the original request.
+                return api(originalRequest);
 
-                    const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-                    // Save new tokens
-                    localStorage.setItem('token', accessToken);
-                    localStorage.setItem('refreshToken', newRefreshToken);
-
-                    // Update the header and RETRY the original request
-                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-                    return api(originalRequest);
-
-                } catch {
-                    // Refresh token is also expired → force logout
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login';
-                }
-            } else {
-                // No refresh token at all → redirect to login
+            } catch (refreshError) {
+                // Refresh token is also expired or invalid → force logout
+                localStorage.removeItem('user'); // Clear user cache
                 if (!window.location.pathname.includes('/login')) {
                     window.location.href = '/login';
                 }

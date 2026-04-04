@@ -1,0 +1,60 @@
+name: PR, Commit & Branch Checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/*'
+      - 'bugfix/*'
+      - 'hotfix/*'
+      - 'release/*'
+
+jobs:
+  check-branch-pr-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # ------------------------
+      # Branch name validation
+      # ------------------------
+      - name: Check branch name
+        run: |
+          BRANCH="${GITHUB_HEAD_REF}"
+          if [[ ! "$BRANCH" =~ ^(feature|bugfix|hotfix|release)/ ]]; then
+            echo "❌ Branch name must start with feature/, bugfix/, hotfix/, or release/"
+            exit 1
+          fi
+          echo "✅ Branch name OK: $BRANCH"
+
+      # ------------------------
+      # PR title validation
+      # ------------------------
+      - name: Check PR title
+        if: github.event_name == 'pull_request'
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          if [[ ! "$TITLE" =~ ^(feat|fix|chore|docs|refactor|test|style): ]]; then
+            echo "❌ PR title must follow Conventional Commits (e.g., feat: add login)"
+            exit 1
+          fi
+          echo "✅ PR title OK: $TITLE"
+
+      # ------------------------
+      # Commit message validation
+      # ------------------------
+      - name: Check commit messages
+        run: |
+          COMMITS=$(git log origin/main..HEAD --pretty=format:%s)
+          INVALID=$(echo "$COMMITS" | grep -vE "^(feat|fix|chore|docs|refactor|test|style):")
+          if [ ! -z "$INVALID" ]; then
+            echo "❌ The following commits do not follow Conventional Commits:"
+            echo "$INVALID"
+            exit 1
+          fi
+          echo "✅ All commit messages OK"

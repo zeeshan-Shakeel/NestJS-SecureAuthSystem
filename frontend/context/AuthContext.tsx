@@ -29,35 +29,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    // Restore user from localStorage on page load
+    // Check auth status on page load/mount
     useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                // Try fetching the profile. If it works, the user is still logged in (cookies sent automatically)
+                const response = await api.get('/auth/profile');
+                setUser(response.data);
+                // Also cache the user object for UI "flash" prevention on next load
+                localStorage.setItem('user', JSON.stringify(response.data));
+            } catch (error) {
+                // Failed to fetch profile -> not logged in or session expired
+                setUser(null);
+                localStorage.removeItem('user');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Try to load cached user first for immediate UI feedback
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('token');
             const storedUser = localStorage.getItem('user');
-            if (token && storedUser) {
+            if (storedUser) {
                 try {
-                    console.log("Stored User", storedUser);
                     setUser(JSON.parse(storedUser));
-                    console.log("User", user);
                 } catch {
-                    // corrupted data, clear it
-                    console.log("Corrupted data");
                     localStorage.removeItem('user');
-                    localStorage.removeItem('token');
                 }
             }
         }
-        setLoading(false);
+
+        checkAuth();
     }, []);
 
     const login = async (data: LoginValues) => {
         try {
+            // Backend sets HttpOnly cookies (accessToken, refreshToken)
             const response = await api.post('/auth/signIn', data);
-            const { accessToken, refreshToken, user: loggedInUser } = response.data;
+            const loggedInUser = response.data.user;
 
             if (typeof window !== 'undefined') {
-                localStorage.setItem('token', accessToken);
-                localStorage.setItem('refreshToken', refreshToken);
                 localStorage.setItem('user', JSON.stringify(loggedInUser));
             }
             setUser(loggedInUser);
@@ -72,6 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = async (data: RegisterValues) => {
         try {
+            // Backend sets cookies even on registration (if configured to auto-login)
+            // but here we follow the existing flow: Register -> Login
             await api.post('/auth/register', data);
             toast.success('Registration successful! Please login.');
             router.push('/login');
@@ -82,14 +95,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const logout = () => {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
+    const logout = async () => {
+        try {
+            // Call backend to clear HttpOnly cookies
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('user');
+            }
+            setUser(null);
+            router.push('/login');
+            toast.success('Logged out');
         }
-        setUser(null);
-        router.push('/login');
-        toast.success('Logged out');
     };
 
     return (
