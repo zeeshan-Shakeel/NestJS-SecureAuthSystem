@@ -9,6 +9,11 @@ import { Request } from 'express';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator.js';
 
+// Check for Public Access: It checks if a route is marked as @Public(). If it is, it lets the request pass through immediately.
+// Extract the Token: It searches for the accessToken inside your request cookies (or the Authorization header as a backup).
+// Verify Identity: It uses your secret key to verify that the token is valid and hasn't been tampered with.
+// Provide User Data: If the token is valid, it attaches the user's information (like ID and Role) to the request object (req.user) so your controllers can identify who is making the request.
+
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(

@@ -107,6 +107,9 @@ export class AuthController {
         return { message: 'Logged out successfully' };
     }
 
+    // The Guard verify and attach the user data into the Request object, and it stays there as the request moves from the Guard to your Controller.
+    // It’s like adding a "User ID Badge" to the request as it enters the building.
+
     @Get('profile')
     getProfile(@Request() req: any) {
         console.log('User Request', req.user);
