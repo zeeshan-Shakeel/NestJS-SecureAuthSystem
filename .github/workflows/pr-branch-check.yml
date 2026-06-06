@@ -50,6 +50,8 @@ jobs:
       # ------------------------
       - name: Check commit messages
         run: |
+          git fetch origin main
+          
           COMMITS=$(git log origin/main..HEAD --pretty=format:%s)
           INVALID=$(echo "$COMMITS" | grep -vE "^(feat|fix|chore|docs|refactor|test|style):")
           if [ ! -z "$INVALID" ]; then
