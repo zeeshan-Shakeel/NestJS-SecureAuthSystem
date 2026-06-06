@@ -25,7 +25,7 @@ jobs:
       # ------------------------
       - name: Check branch name
         run: |
-          BRANCH="${GITHUB_HEAD_REF}"
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
           if [[ ! "$BRANCH" =~ ^(feature|bugfix|hotfix|release)/ ]]; then
             echo "❌ Branch name must start with feature/, bugfix/, hotfix/, or release/"
             exit 1
