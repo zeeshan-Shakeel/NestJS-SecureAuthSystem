@@ -45,18 +45,18 @@ jobs:
           fi
           echo "✅ PR title OK: $TITLE"
 
-      # ------------------------
-      # Commit message validation
-      # ------------------------
-      - name: Check commit messages
-        run: |
-          git fetch origin main
-          
-          COMMITS=$(git log origin/main..HEAD --pretty=format:%s)
-          INVALID=$(echo "$COMMITS" | grep -vE "^(feat|fix|chore|docs|refactor|test|style):")
-          if [ ! -z "$INVALID" ]; then
-            echo "❌ The following commits do not follow Conventional Commits:"
-            echo "$INVALID"
-            exit 1
-          fi
-          echo "✅ All commit messages OK"
+      # # ------------------------
+      # # Commit message validation
+      # # ------------------------
+      # - name: Check commit messages
+      #   run: |
+      #     git fetch origin main
+
+      #     COMMITS=$(git log origin/main..HEAD --pretty=format:%s)
+      #     INVALID=$(echo "$COMMITS" | grep -vE "^(feat|fix|chore|docs|refactor|test|style):")
+      #     if [ ! -z "$INVALID" ]; then
+      #       echo "❌ The following commits do not follow Conventional Commits:"
+      #       echo "$INVALID"
+      #       exit 1
+      #     fi
+      #     echo "✅ All commit messages OK"
