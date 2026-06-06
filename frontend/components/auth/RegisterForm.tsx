@@ -1,10 +1,5 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/context/AuthContext';
-import { registerSchema, RegisterValues } from '@/lib/schemas';
-import { Button } from '@/components/ui/button';
 import {
     Form,
     FormControl,
@@ -14,37 +9,14 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useRegisterForm } from '@/hooks/auth/use-register';
 
 export default function RegisterForm() {
-    const { register: registerUser } = useAuth();
-    const [loading, setLoading] = useState(false);
-
-    const form = useForm<RegisterValues>({
-        resolver: zodResolver(registerSchema),
-        defaultValues: {
-            name: '',
-            email: '',
-            password: '',
-        },
-    });
-
-    async function onSubmit(data: RegisterValues) {
-        console.log("Registration Data");
-        setLoading(true);
-        try {
-            console.log("Registration Data", data);
-            await registerUser(data);
-            // Redirect handled in AuthContext
-        } catch (error) {
-            // Error handled in AuthContext (toast)
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { form, isLoading, onSubmit } = useRegisterForm();
 
     return (
         <Card className="w-full max-w-md mx-auto">
@@ -54,12 +26,7 @@ export default function RegisterForm() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                   <form
-  onSubmit={(e) => {
-    console.log("Form clicked");
-    form.handleSubmit(onSubmit)(e);
-  }}
->
+                    <form onSubmit={onSubmit} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="name"
@@ -99,8 +66,8 @@ export default function RegisterForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Create account
                         </Button>
                     </form>

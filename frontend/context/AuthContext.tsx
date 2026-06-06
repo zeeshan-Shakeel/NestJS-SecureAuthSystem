@@ -21,9 +21,10 @@ interface AuthContextType {
     register: (data: RegisterValues) => Promise<void>;
     logout: () => void;
 }
-
+//Create the AuthContext, initially its a undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+//create a AuthProvider component which will wrap the application and provide the auth context to its children
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -33,9 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                // Try fetching the profile. If it works, the user is still logged in (cookies sent automatically)
+                // Try fetching the profile. If it works, the user is still logged in (cookies sent automatically) or whether it is expire
+                // for example token or user are in the browser set so why we need this call , the reason we need to confirm whether the token is expired or not
                 const response = await api.get('/auth/profile');
+                // remember one thingh the browser automaticaly attach the cooie wwith this call because in the axios 
+                // configure we set credential is a true 
                 setUser(response.data);
+                console.log("DataShow",response.data);
                 // Also cache the user object for UI "flash" prevention on next load
                 localStorage.setItem('user', JSON.stringify(response.data));
             } catch (error) {
@@ -112,12 +117,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
+        //create a AuthContext.Provider which will provide the auth context to its children
         <AuthContext.Provider value={{ user, loading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );
 }
-
+//custom hook so we directly destructure the values from the context
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {
@@ -125,3 +131,5 @@ export const useAuth = () => {
     }
     return context;
 };
+
+
