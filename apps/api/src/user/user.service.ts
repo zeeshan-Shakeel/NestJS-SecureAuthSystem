@@ -1,61 +1,47 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 import { RegisterUserDto } from '../schemas/user.schema.js';
-
+import { PrismaService } from '../database/prisma.service.js';
 @Injectable()
 export class UserService {
-    constructor(private readonly db: DatabaseService) { }
+    constructor(private readonly prisma: PrismaService) { }
 
     async createUser(user: RegisterUserDto) {
-        const query = `
-            INSERT INTO "User" (email, name, password, role, "createdAt", "updatedAt")
-            VALUES ($1, $2, $3, $4, NOW(), NOW())
-            RETURNING *
-        `;
-
-        const values = [user.email, user.name, user.password, user.role];
-
         try {
-            const result = await this.db.query(query, values);
-            return result.rows[0];
+            const result = await this.prisma.user.create({
+                data: user,
+            });
+            return result;
         } catch (error: any) {
-            if (error.code === '23505') { // Unique constraint violation code for Postgres
+            if (error.code === 'P2002') { // Unique constraint violation code for Postgres
                 throw new ConflictException('Email already exists');
             }
             throw error;
         }
     }
     async getUser(id: number) {
-        const query = `SELECT * FROM "User" WHERE id = $1`;
-        const result = await this.db.query(query, [id]);
-        return result.rows[0];
+        const result = await this.prisma.user.findFirst({where:{id}});
+        return result;
     }
     async getAllUsers() {
-        const query = `Select * from "User"`;
-        const result = await this.db.query(query);
-        return result.rows;
+        const result = await this.prisma.user.findMany();
+        return result;
     }
     async deleteUser(id: number) {
-        const query = `DELETE FROM "User" WHERE id = $1 RETURNING name`;
-        const result = await this.db.query(query, [id]);
+        const result = await this.prisma.user.delete({where:{id}});
         return `Deleted Successfully `;
     }
     async updateUser(id: number, user: RegisterUserDto) {
-        const query = `UPDATE "User" SET name = $1, email = $2, password = $3, role = $4 WHERE id = $5 RETURNING *`;
-        const result = await this.db.query(query, [user.name, user.email, user.password, user.role, id]);
-        return result.rows[0];
+        const result = await this.prisma.user.update({where:{id},data:user});
+        return result;
     }
     async getUSerByEmail(email: string) {
-        const query = `Select * from "User" where email=$1`;
-        const values = [email];
-        const result = await this.db.query(query, values);
+        const result = await this.prisma.user.findFirst({where:{email}});
         // console.log("Email:", result)
-        return result.rows[0];
+        return result;
     }
     async updateRefreshToken(id: number, refreshToken: string) {
-        const query = 'Update "User" SET "refreshToken"=$1 where id=$2';
-        const value = [refreshToken, id];
-        const result = await this.db.query(query, value);
+        const result = await this.prisma.user.update({where:{id},data:{refreshToken}});
 
     }
 }

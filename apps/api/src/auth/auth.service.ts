@@ -11,8 +11,8 @@ export class AuthService {
     }
     async register(registerUserDto: RegisterUserDto) {
         const hash = await bcrypt.hash(registerUserDto.password, 10);
-        const newUser = await this.userservice.createUser({ ...registerUserDto, password: hash , role:registerUserDto.role ?? 'User'});
-        const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
+        const newUser = await this.userservice.createUser({ ...registerUserDto, password: hash, role: registerUserDto.role ?? 'user' });
+        const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };                                                                             
         const token = await this.jwtService.signAsync(payload);
         const { password, ...newUserData } = newUser;
         console.log("New User Data", newUserData);
@@ -36,20 +36,31 @@ export class AuthService {
         return this.userservice.deleteUser(id);
     }
     async signIn(loginUserDto: loginUserDto): Promise<{ accessToken: string, refreshToken: string, user: UserResponseDto }> {
-        console.log("Hy")
         const user = await this.userservice.getUSerByEmail(loginUserDto.email);
-        console.log("checking", user)
-        const isMatch = user ? await bcrypt.compare(loginUserDto.password, user.password) : false;
+
+        if (!user) {
+            throw new UnauthorizedException("Invalid Username or password");
+        }
+
+        const isMatch = await bcrypt.compare(loginUserDto.password, user.password);
         if (!isMatch) {
             throw new UnauthorizedException("Invalid Username or password");
         }
+
         const payload = { sub: user.id, email: user.email, role: user.role };
         const token = await this.jwtService.signAsync(payload);
+
         const { password, ...newUserData } = user;
         const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
         const hasRefreshToken = await bcrypt.hash(refreshToken, 10);
+
         await this.userservice.updateRefreshToken(user.id, hasRefreshToken);
-        return { accessToken: token, refreshToken: refreshToken, user: newUserData };
+
+        return {
+            accessToken: token,
+            refreshToken: refreshToken,
+            user: newUserData as UserResponseDto
+        };
     }
 
     async refreshTokens(refreshTokenDto: RefreshTokenDto) {
@@ -84,7 +95,7 @@ export class AuthService {
             return {
                 accessToken,
                 refreshToken: newRefreshToken,
-                user: userData
+                user: userData as UserResponseDto
             };
         } catch (e) {
             throw new UnauthorizedException('Invalid Refresh Token');
