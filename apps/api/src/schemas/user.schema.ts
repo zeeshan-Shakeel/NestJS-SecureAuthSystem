@@ -1,11 +1,11 @@
 import z from "zod";
 
 export const registerUserSchema = z.object({
-    name: z.string().min(3, { message: "Name must be at least 3 characters long" }),
+    name: z.string().min(3, { message: "Name must be at least 3 characters long" }).nullable(),
     email: z.string().email(),
     password: z.string().min(6),
-    role: z.enum(['User', 'admin']).optional(),
-    refreshToken: z.string().optional(),
+    role: z.enum(['user', 'admin']).optional(),
+    refreshToken: z.string().optional().nullable(),
 })
 
 export type RegisterUserDto = z.infer<typeof registerUserSchema>;
